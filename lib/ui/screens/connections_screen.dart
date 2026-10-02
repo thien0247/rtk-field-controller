@@ -159,7 +159,7 @@ class _ConnectionsScreenState extends State<ConnectionsScreen> {
                 ),
                 const SizedBox(width: 10),
                 ElevatedButton(
-                  style: ElevatedButton.styleKey(
+                  style: _btnStyle(
                     rtk.isBluetoothConnected ? Colors.redAccent : Colors.blueAccent,
                   ),
                   onPressed: () {
@@ -297,144 +297,142 @@ class _ConnectionsScreenState extends State<ConnectionsScreen> {
               ],
             ),
             const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              height: 44,
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleKey(
-                  isBase ? Colors.red.shade700 : const Color(0xFFE65100),
+              SizedBox(
+                width: double.infinity,
+                height: 44,
+                child: ElevatedButton.icon(
+                  style: _btnStyle(
+                    isBase ? Colors.red.shade700 : const Color(0xFFE65100),
+                  ),
+                  icon: Icon(isBase ? Icons.stop_circle : Icons.wifi_tethering),
+                  label: Text(
+                    isBase ? "DỪNG TRẠM PHÁT BASE" : "BẮT ĐẦU PHÁT BASE DI ĐỘNG (1-CHẠM)",
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                  onPressed: () {
+                    if (isBase) {
+                      // Dừng phát và quay về Rover
+                      rtk.switchToRoverMode(
+                        host: _ipController.text,
+                        port: int.tryParse(_portController.text) ?? 2101,
+                        mountpoint: _mountController.text,
+                      );
+                    } else {
+                      // Kích hoạt phát Base
+                      rtk.switchToBaseMode(
+                        host: _ipController.text,
+                        port: int.tryParse(_portController.text) ?? 2101,
+                        mountpoint: _mountController.text,
+                        password: _passController.text,
+                        isSurveyIn: true,
+                      );
+                    }
+                  },
                 ),
-                icon: Icon(isBase ? Icons.stop_circle : Icons.wifi_tethering),
-                label: Text(
-                  isBase ? "DỪNG TRẠM PHÁT BASE" : "BẮT ĐẦU PHÁT BASE DI ĐỘNG (1-CHẠM)",
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                ),
-                onPressed: () {
-                  if (isBase) {
-                    // Dừng phát và quay về Rover
-                    rtk.switchToRoverMode(
-                      host: _ipController.text,
-                      port: int.tryParse(_portController.text) ?? 2101,
-                      mountpoint: _mountController.text,
-                    );
-                  } else {
-                    // Kích hoạt phát Base
-                    rtk.switchToBaseMode(
-                      host: _ipController.text,
-                      port: int.tryParse(_portController.text) ?? 2101,
-                      mountpoint: _mountController.text,
-                      password: _passController.text,
-                      isSurveyIn: true,
-                    );
-                  }
-                },
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    }
+
+    Widget _buildStaticSurveySection(RtkStateProvider rtk) {
+      bool isStatic = rtk.mode == OperatingMode.staticSurvey;
+
+      return Card(
+        color: const Color(0xFF1B222D),
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.save_alt, color: Colors.cyanAccent, size: 22),
+                  const SizedBox(width: 8),
+                  const Text("Đo GNSS Tĩnh (Xuất File RINEX 2.11)", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+                  const Spacer(),
+                  if (isStatic)
+                    Text(
+                      "${rtk.staticSession?.epochCount ?? 0} Epochs",
+                      style: const TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold, fontSize: 12),
+                    ),
+                ],
+              ),
+              const Divider(color: Colors.white12, height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _staticPointController,
+                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                      decoration: const InputDecoration(labelText: "Tên Điểm (Base389)", isDense: true),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: _staticObserverController,
+                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                      decoration: const InputDecoration(labelText: "Người Đo (B102)", isDense: true),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: _staticHeightController,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                      decoration: const InputDecoration(labelText: "Chiều Cao Mốc (m)", isDense: true),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                height: 42,
+                child: ElevatedButton.icon(
+                  style: _btnStyle(
+                    isStatic ? Colors.red.shade700 : const Color(0xFF00838F),
+                  ),
+                  icon: Icon(isStatic ? Icons.stop : Icons.fiber_manual_record),
+                  label: Text(
+                    isStatic ? "DỪNG ĐO TĨNH & XUẤT FILE RINEX" : "BẮT ĐẦU ĐO GNSS TĨNH",
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  onPressed: () {
+                    if (isStatic) {
+                      rtk.stopStaticSurvey(
+                        defaultHost: _ipController.text,
+                        defaultPort: int.tryParse(_portController.text) ?? 2101,
+                        defaultMount: _mountController.text,
+                      );
+                    } else {
+                      double h = double.tryParse(_staticHeightController.text) ?? 1.5;
+                      rtk.startStaticSurvey(
+                        pointName: _staticPointController.text,
+                        observer: _staticObserverController.text,
+                        antennaHeight: h,
+                        epochIntervalSec: _staticIntervalSec,
+                      );
+                    }
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
   }
 
-  Widget _buildStaticSurveySection(RtkStateProvider rtk) {
-    bool isStatic = rtk.mode == OperatingMode.staticSurvey;
-
-    return Card(
-      color: const Color(0xFF1B222D),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.save_alt, color: Colors.cyanAccent, size: 22),
-                const SizedBox(width: 8),
-                const Text("Đo GNSS Tĩnh (Xuất File RINEX 2.11)", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
-                const Spacer(),
-                if (isStatic)
-                  Text(
-                    "${rtk.staticSession?.epochCount ?? 0} Epochs",
-                    style: const TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold, fontSize: 12),
-                  ),
-              ],
-            ),
-            const Divider(color: Colors.white12, height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _staticPointController,
-                    style: const TextStyle(color: Colors.white, fontSize: 13),
-                    decoration: const InputDecoration(labelText: "Tên Điểm (Base389)", isDense: true),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: _staticObserverController,
-                    style: const TextStyle(color: Colors.white, fontSize: 13),
-                    decoration: const InputDecoration(labelText: "Người Đo (B102)", isDense: true),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: _staticHeightController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    style: const TextStyle(color: Colors.white, fontSize: 13),
-                    decoration: const InputDecoration(labelText: "Chiều Cao Mốc (m)", isDense: true),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              height: 42,
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleKey(
-                  isStatic ? Colors.red.shade700 : const Color(0xFF00838F),
-                ),
-                icon: Icon(isStatic ? Icons.stop : Icons.fiber_manual_record),
-                label: Text(
-                  isStatic ? "DỪNG ĐO TĨNH & XUẤT FILE RINEX" : "BẮT ĐẦU ĐO GNSS TĨNH",
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                onPressed: () {
-                  if (isStatic) {
-                    rtk.stopStaticSurvey(
-                      defaultHost: _ipController.text,
-                      defaultPort: int.tryParse(_portController.text) ?? 2101,
-                      defaultMount: _mountController.text,
-                    );
-                  } else {
-                    double h = double.tryParse(_staticHeightController.text) ?? 1.5;
-                    rtk.startStaticSurvey(
-                      pointName: _staticPointController.text,
-                      observer: _staticObserverController.text,
-                      antennaHeight: h,
-                      epochIntervalSec: _staticIntervalSec,
-                    );
-                  }
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-extension on ElevatedButton {
-  static ButtonStyle styleKey(Color color) {
+  ButtonStyle _btnStyle(Color color) {
     return ElevatedButton.styleFrom(
       backgroundColor: color,
       foregroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
     );
   }
-}

@@ -72,7 +72,7 @@ class _Vn2000ScreenState extends State<Vn2000Screen> {
         actions: [
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert, color: Colors.white),
-            dropdownColor: const Color(0xFF232D3B),
+            color: const Color(0xFF232D3B),
             onSelected: (val) {
               if (val == "gps") {
                 if (rtk.currentPosition.latitude != 0.0) {
