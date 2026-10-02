@@ -9,20 +9,13 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  # State management & reactive streams
   provider: ^6.1.1
-  # Bluetooth SPP (Classic) & BLE
   flutter_bluetooth_serial: ^0.4.0
-  flutter_blue_plus: ^1.31.0
-  # Network & Protocols
   intl: ^0.19.0
   path_provider: ^2.1.2
   permission_handler: ^11.3.0
-  # GIS & Maps
   flutter_map: ^6.1.0
   latlong2: ^0.9.0
-  # Audio/Voice feedback
-  flutter_tts: ^3.8.5
 
 dev_dependencies:
   flutter_test:
@@ -31,5 +24,3 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  assets:
-    - assets/icons/
